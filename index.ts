@@ -58,14 +58,12 @@ async function main() {
             tex.minFilter = THREE.NearestFilter;
 
             const img = document.createElement("img");
-        img.classList.add("preview");
             img.src = tex.image.src;
 
             addPreviewImage(img);
         } else {
             addPreviewImage(tex);
         }
-        parent.appendChild(img);
     };
 
     const sprites: any[] = [
