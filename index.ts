@@ -7,7 +7,7 @@ import * as THREE from "three";
 // import CameraControls from "camera-controls";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
 import { PixelData } from "./src/PixelData.ts";
-import { Side, getMaterialForSide, resizeImage, toThreeVector3, vec2 } from "./src/util.ts";
+import { Side, addPreviewImage, getMaterialForSide, resizeImage, toThreeVector3, vec2 } from "./src/util.ts";
 import { DirectionColor } from "./src/DirectionColor.ts";
 import { VoxelWorld } from "./src/VoxelWorld.ts";
 
@@ -52,17 +52,18 @@ async function main() {
     texture.magFilter = THREE.NearestFilter;
     texture.minFilter = THREE.NearestFilter;
 
-    const addPreview = (tex: THREE.Texture) => {
-        tex.magFilter = THREE.NearestFilter;
-        tex.minFilter = THREE.NearestFilter;
-        // Add to ui
-        const img = document.createElement("img");
-        img.classList.add("preview");
-        img.src = tex.image.src;
+    const addPreview = (tex: THREE.Texture|HTMLImageElement) => {
+        if (tex instanceof THREE.Texture) {
+            tex.magFilter = THREE.NearestFilter;
+            tex.minFilter = THREE.NearestFilter;
 
-        const parent = document.querySelector("#sprite-previews");
-        if (parent == null) {
-            throw new Error("Failed to find any elements with id: '#sprite-previews'!");
+            const img = document.createElement("img");
+        img.classList.add("preview");
+            img.src = tex.image.src;
+
+            addPreviewImage(img);
+        } else {
+            addPreviewImage(tex);
         }
         parent.appendChild(img);
     };

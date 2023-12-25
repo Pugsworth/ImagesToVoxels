@@ -133,3 +133,17 @@ export async function loadImage(url: string, timeout=30000)
         img.src = url;
     });
 }
+
+export function addPreviewImage(img: HTMLImageElement)
+{
+    const parent = document.querySelector("#sprite-previews");
+    if (!parent) {
+        throw new Error("Unable to find sprite previews parent");
+    }
+
+    const div = document.createElement("div");
+    div.classList.add("preview");
+    div.appendChild(img);
+
+    parent.appendChild(div);
+}
