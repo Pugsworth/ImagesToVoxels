@@ -99,6 +99,10 @@ async function main() {
         scene.add(mesh2);
     }
 
+    const axis = new THREE.AxesHelper(5);
+    axis.position.set(0, 16, 0);
+    scene.add(axis);
+
 
     function addLight(x: number, y: number, z: number) {
         const color = 0xFFFFFF;
