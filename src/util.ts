@@ -3,15 +3,30 @@ import * as THREE from "three";
 
 export type Vec2 = { x: number, y: number };
 export type Vec3 = { x: number, y: number, z: number };
+export type UV2 = { u: number, v: number };
+export type Size2 = { width: number, height: number };
 
-export function vec2(x: number=0, y: number=x): Vec2 {
+export function vec2(x: number = 0, y: number = x): Vec2
+{
     return { x, y };
 }
-export function vec3(x: number=0, y: number=x, z: number=x): Vec3 {
+export function vec3(x: number = 0, y: number = x, z: number = x): Vec3
+{
     return { x, y, z };
 }
 
-export function toThreeVector3(v: Vec3): THREE.Vector3 {
+export function size2(width: number = 0, height: number = width): Size2
+{
+    return { width, height };
+}
+
+export function uv2(u: number = 0, v: number = u): UV2
+{
+    return { u, v };
+}
+
+export function toThreeVector3(v: Vec3): THREE.Vector3
+{
     return new THREE.Vector3(v.x, v.y, v.z);
 }
 
