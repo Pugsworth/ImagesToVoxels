@@ -33,15 +33,16 @@ export function toThreeVector3(v: Vec3): THREE.Vector3
 export type PackedColor = number;
 
 export const DirectionMaterials = {
-    LINE_RED       : new THREE.LineBasicMaterial({ color: 0xFF0000 }),
-    LINE_LIGHTRED  : new THREE.LineBasicMaterial({ color: 0xFFAAAA }),
-    LINE_GREEN     : new THREE.LineBasicMaterial({ color: 0x00FF00 }),
+    LINE_RED: new THREE.LineBasicMaterial({ color: 0xFF0000 }),
+    LINE_LIGHTRED: new THREE.LineBasicMaterial({ color: 0xFFAAAA }),
+    LINE_GREEN: new THREE.LineBasicMaterial({ color: 0x00FF00 }),
     LINE_LIGHTGREEN: new THREE.LineBasicMaterial({ color: 0xAAFFAA }),
-    LINE_BLUE      : new THREE.LineBasicMaterial({ color: 0x0000FF }),
-    LINE_LIGHTBLUE : new THREE.LineBasicMaterial({ color: 0xAAAAFF }),
+    LINE_BLUE: new THREE.LineBasicMaterial({ color: 0x0000FF }),
+    LINE_LIGHTBLUE: new THREE.LineBasicMaterial({ color: 0xAAAAFF }),
 };
 
-export enum Side {
+export enum Side
+{
     NONE,
     TOP,
     BOTTOM,
@@ -72,7 +73,8 @@ export function getMaterialForSide(side: Side): THREE.LineBasicMaterial
     }
 }
 
-interface DirectionColors {
+interface DirectionColors
+{
     [key: string]: PackedColor;
 }
 
@@ -80,12 +82,12 @@ interface DirectionColors {
  * The colors for each direction.
  */
 export const DirectionColors: DirectionColors = {
-    [ Side[Side.NORTH].toLowerCase()    ]: 0xFF0000,
-    [ Side[Side.SOUTH].toLowerCase()    ]: 0xFF0000,
-    [ Side[Side.EAST].toLowerCase()     ]: 0x00FF00,
-    [ Side[Side.WEST].toLowerCase()     ]: 0x00FF00,
-    [ Side[Side.TOP].toLowerCase()      ]: 0x0000FF,
-    [ Side[Side.BOTTOM].toLowerCase()   ]: 0x0000FF,
+    [Side[Side.NORTH].toLowerCase()]: 0xFF0000,
+    [Side[Side.SOUTH].toLowerCase()]: 0xFF0000,
+    [Side[Side.EAST].toLowerCase()]: 0x00FF00,
+    [Side[Side.WEST].toLowerCase()]: 0x00FF00,
+    [Side[Side.TOP].toLowerCase()]: 0x0000FF,
+    [Side[Side.BOTTOM].toLowerCase()]: 0x0000FF,
 };
 
 
@@ -105,7 +107,8 @@ export async function resizeImage(url: string, newSize: Vec2)
         const canvas = document.createElement("canvas");
         const img = new Image();
         img.src = url;
-        img.decode().then(() => {
+        img.decode().then(() =>
+        {
             canvas.width = newSize.x;
             canvas.height = newSize.y;
             const ctx = canvas.getContext("2d", { alpha: true });
@@ -132,15 +135,18 @@ export async function resizeImage(url: string, newSize: Vec2)
  * @param {number} [timeout=30000] Timeout in milliseconds to reject the promise.
  * @return {Promise<HTMLImageElement>}
  */
-export async function loadImage(url: string, timeout=30000)
+export async function loadImage(url: string, timeout = 30000)
 {
-    return new Promise((resolve, reject) => {
-        const timeoutId = setTimeout(() => {
+    return new Promise((resolve, reject) =>
+    {
+        const timeoutId = setTimeout(() =>
+        {
             reject(new Error("Timeout loading image: " + url));
         }, timeout);
 
         const img = new Image();
-        img.onload = () => {
+        img.onload = () =>
+        {
             clearTimeout(timeoutId);
             resolve(img);
         };
