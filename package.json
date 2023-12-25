@@ -1,0 +1,18 @@
+{
+  "scripts": {
+    "start": "parcel index.html --open",
+    "build": "parcel build --public-url /np index.html",
+    "lint": "eslint . --ext .ts"
+  },
+  "devDependencies": {
+    "@types/three": "^0.160.0",
+    "@typescript-eslint/eslint-plugin": "^4.14.2",
+    "eslint": "^7.19.0",
+    "parcel-bundler": "^1.12.4",
+    "sass": "^1.69.5"
+  },
+  "dependencies": {
+    "camera-controls": "^2.7.3",
+    "three": "^0.160.0"
+  }
+}
