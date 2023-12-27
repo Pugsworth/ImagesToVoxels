@@ -1,5 +1,6 @@
 // import * as THREE from "../modules/three.js";
 import * as THREE from "three";
+import { Side, getMaterialForSide } from "./Side";
 
 export type Vec2 = { x: number, y: number };
 export type Vec3 = { x: number, y: number, z: number };
@@ -31,47 +32,6 @@ export function toThreeVector3(v: Vec3): THREE.Vector3
 }
 
 export type PackedColor = number;
-
-export const DirectionMaterials = {
-    LINE_RED: new THREE.LineBasicMaterial({ color: 0xFF0000 }),
-    LINE_LIGHTRED: new THREE.LineBasicMaterial({ color: 0xFFAAAA }),
-    LINE_GREEN: new THREE.LineBasicMaterial({ color: 0x00FF00 }),
-    LINE_LIGHTGREEN: new THREE.LineBasicMaterial({ color: 0xAAFFAA }),
-    LINE_BLUE: new THREE.LineBasicMaterial({ color: 0x0000FF }),
-    LINE_LIGHTBLUE: new THREE.LineBasicMaterial({ color: 0xAAAAFF }),
-};
-
-export enum Side
-{
-    NONE,
-    TOP,
-    BOTTOM,
-    NORTH,
-    SOUTH,
-    EAST,
-    WEST
-}
-
-
-export function getMaterialForSide(side: Side): THREE.LineBasicMaterial
-{
-    switch (side) {
-        case Side.TOP:
-            return DirectionMaterials.LINE_BLUE;
-        case Side.BOTTOM:
-            return DirectionMaterials.LINE_LIGHTBLUE;
-        case Side.NORTH:
-            return DirectionMaterials.LINE_RED;
-        case Side.SOUTH:
-            return DirectionMaterials.LINE_LIGHTRED;
-        case Side.EAST:
-            return DirectionMaterials.LINE_GREEN;
-        case Side.WEST:
-            return DirectionMaterials.LINE_LIGHTGREEN;
-        default:
-            throw new Error("Invalid side: " + side);
-    }
-}
 
 interface DirectionColors
 {

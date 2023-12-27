@@ -1,4 +1,5 @@
-import { vec3, Vec3, PackedColor, getMaterialForSide, Side } from "./util.ts";
+import { PackedColor, Vec3, vec3 } from "./util";
+import { getMaterialForSide, Side } from "./Side";
 
 
 export class DirectionColor
