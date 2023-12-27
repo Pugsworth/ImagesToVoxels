@@ -13,12 +13,12 @@ In the future, I'll have controls for uploading the images for which faces and m
 
 # Roadmap
 ### MVP
-- [ ] Generate a color palette and texture atlas from that palette of the input image.
+- [ ] Directional widget.
+- [/] Generate a color palette and texture atlas from that palette of the input image.
     This palette will be used for the texturing of the 3D model.
 - [ ] Ability to select individual meshes that are generated from the input images.
     This includes a shader to highlight the selected mesh.
 - [ ] Export the model as a simple file format.
-- [ ] Directional widget.
 
 ### Planned Features
 - [ ] Ability to draw-n-drop images to the sides of the cube, as well as a way to move them around and delete them.

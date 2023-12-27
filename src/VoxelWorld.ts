@@ -1,6 +1,6 @@
 // import * as THREE from "../modules/three.js";
 import * as THREE from "three";
-import { Vec3 } from "./util.js";
+import { Vec3, vec3ToIndex } from "./util.js";
 
 export type Options = {
     cellSize?: number,
@@ -10,8 +10,12 @@ export type Options = {
 };
 
 export type VoxelData = number | {
-    [key: string]: any,
+    [key: string]: unknown,
 };
+
+export type VoxelMap = VoxelData[];
+
+type CellID = string;
 
 // import * as ColorThief from "https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js";
 export class VoxelWorld
@@ -79,13 +83,16 @@ export class VoxelWorld
         },
     ];
 
-    _cellSize: number = 1;
-    _tileSize: number = 1;
-    _tileTextureWidth: number = 1;
-    _tileTextureHeight: number = 1;
-    _cellSliceSize: number = 1;
-    _cells: any = {};
-    _colors: any = [];
+    // A.K.A. "chunk size"
+    _cellSize: number;
+    // I think this is the size of a single voxel in the texture
+    _tileSize: number;
+    _tileTextureWidth: number;
+    _tileTextureHeight: number;
+    //
+    _cellSliceSize: number;
+    _cells: VoxelMap = [];
+    _colors: unknown = [];
 
 
     constructor(options: Options={})
@@ -96,8 +103,6 @@ export class VoxelWorld
         this._tileTextureHeight = options.tileTextureHeight || 1;
 
         this._cellSliceSize = this._cellSize * this._cellSize;
-        this._cells = {};
-        this._colors = [];
     }
 
     computeVoxelOffset(x: number, y: number, z: number)
@@ -110,11 +115,14 @@ export class VoxelWorld
             voxelX;
     }
 
-    computeCellId(x: number, y: number, z: number)
+    computeCellId(x: number, y: number, z: number): CellID
     {
         const cellX = Math.floor(x / this._cellSize);
         const cellY = Math.floor(y / this._cellSize);
         const cellZ = Math.floor(z / this._cellSize);
+
+        // const index = vec3ToIndex({ x: cellX, y: cellY, z: cellZ }, this._cellSize, this._cellSize);
+
         return `${cellX},${cellY},${cellZ}`;
     }
 
@@ -131,7 +139,8 @@ export class VoxelWorld
 
     getCellForVoxel(x: number, y: number, z: number)
     {
-        return this._cells[this.computeCellId(x, y, z)];
+        const cellid = this.computeCellId(x, y, z)
+        return this._cells[cellid];
     }
 
     setVoxel(x: number, y: number, z: number, data: VoxelData , addCell = true)
@@ -147,7 +156,7 @@ export class VoxelWorld
         cell[voxelOffset] = data;
     }
 
-    getVoxel(x: number, y: number, z: number)
+    getVoxel(x: number, y: number, z: number): VoxelData
     {
         const cell = this.getCellForVoxel(x, y, z);
         if (!cell) {
@@ -176,7 +185,7 @@ export class VoxelWorld
                     const voxel = this.getVoxel(voxelX, voxelY, voxelZ);
                     if (voxel) {
                         // voxel 0 is sky (empty) so for UVs we start at 0
-                        const uvVoxel = voxel - 1;
+                        const uvVoxel = (voxel as number) - 1;
                         // There is a voxel here but do we need faces for it?
                         for (const { dir, corners, uvRow } of VoxelWorld.FACES) {
                             const neighbor = this.getVoxel(
@@ -189,9 +198,8 @@ export class VoxelWorld
                                 for (const { pos, uv } of corners) {
                                     positions.push(pos[0] + x, pos[1] + y, pos[2] + z);
                                     normals.push(...dir);
-                                    uvs.push(
-                                        (uvVoxel + uv[0]) * this._tileSize / this._tileTextureWidth,
-                                        1 - (uvRow + 1 - uv[1]) * this._tileSize / this._tileTextureHeight);
+                                    // uvs.push((uvVoxel + uv[0]) * this._tileSize / this._tileTextureWidth, 1 - (uvRow + 1 - uv[1]) * this._tileSize / this._tileTextureHeight);
+                                    uvs.push(...uv);
                                 }
                                 indices.push(
                                     ndx, ndx + 1, ndx + 2,
@@ -297,5 +305,38 @@ export class VoxelWorld
             }
         }
         return null;
+    }
+
+    *enumerateVoxels(): Generator<{x:number, y:number, z:number, data:VoxelData}>
+    {
+        for (let y = 0; y < this._cellSize; ++y) {
+            for (let z = 0; z < this._cellSize; ++z) {
+                for (let x = 0; x < this._cellSize; ++x) {
+                    const voxel = this.getVoxel(x, y, z);
+                    const data = yield {x, y, z, data:voxel};
+                    if (data) {
+                        // this.setVoxel(x, y, z, data);
+                    }
+                }
+            }
+        }
+    }
+
+    estimateMemorySize(): number
+    {
+        // Give an estimation of the amount of memory that would needed to store the voxel world.
+
+        // The size of a single cell in bytes.
+        const cellSize = Math.pow(this._cellSize, 3);
+        // The size of a single voxel in bytes.
+        const voxelSize = 1;
+        // The size of a single cell in bytes.
+        const cellSizeBytes = cellSize * voxelSize;
+        // The amount of cells in the voxel world.
+        const cellCount = this._cells.length;
+        // The size of the voxel world in bytes.
+        const voxelWorldSizeBytes = cellCount * cellSizeBytes;
+
+        return voxelWorldSizeBytes;
     }
 }

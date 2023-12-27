@@ -1,29 +1,29 @@
 // Three.js - Voxel Geometry - UI
 // from https://threejsfundamentals.org/threejs/threejs-voxel-geometry-culled-faces-ui.html
 
-// import * as THREE from "./modules/three.js";
-// import CameraControls from "./modules/camera-controls.js";
 import * as THREE from "three";
-// import CameraControls from "camera-controls";
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls.js";
+import { ViewHelper } from "three/examples/jsm/helpers/ViewHelper.js";
+import { BasicAtlas } from "./src/BasicAtlas.ts";
 import { PixelData } from "./src/PixelData.ts";
-import { Side, addPreviewImage, getMaterialForSide, resizeImage, toThreeVector3, vec2 } from "./src/util.ts";
-import { DirectionColor } from "./src/DirectionColor.ts";
 import { VoxelWorld } from "./src/VoxelWorld.ts";
 
+// @ts-expect-error Importing images results in a "cannot find module" error.
 import mushroomImage from "./assets/images/brown_mushroom.png";
+import { addCorner, addCross, addLight, addPreviewImage, addSun, deg2rad, getMousePositionRelative, kelvinRGB, packColor24, randInt, resizeImage, resizeRendererToDisplaySize, sampleSide, vec2 } from "./src/util.ts";
+import { Side } from "./src/Side.ts";
 
 
-// CameraControls.install({ THREE: THREE });
-
-async function main() {
+async function main()
+{
     const clock = new THREE.Clock();
 
     const canvas = document.querySelector('#c') as HTMLCanvasElement;
     if (canvas == null) {
         throw new Error("Failed to find any elements with id: '#c'!");
     }
-    const renderer = new THREE.WebGLRenderer({canvas});
+    const renderer = new THREE.WebGLRenderer({ canvas });
+    renderer.autoClear = false;
 
     const cellSize = 16;
 
@@ -31,28 +31,31 @@ async function main() {
     const aspect = 2;  // the canvas default
     const near = 0.1;
     const far = 1000;
-    const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+    const zoom = 20;
+    // const camera = new THREE.PerspectiveCamera(fov, aspect, near, far);
+    const camera = new THREE.OrthographicCamera(-1*zoom, 1*zoom, 1*zoom, -1*zoom, near, far);
     camera.position.set(-cellSize * .3, cellSize * .8, -cellSize * .3);
 
 
-    // const controls = new CameraControls(camera, renderer.domElement);
     const controls = new OrbitControls(camera, renderer.domElement);
     controls.target = new THREE.Vector3(cellSize / 2, cellSize / 3, cellSize / 2);
-    // controls.setTarget(cellSize / 2, cellSize / 3, cellSize / 2);
     controls.update(0);
 
     const scene = new THREE.Scene();
     scene.background = new THREE.Color("lightblue");
 
+    const viewHelper = new ViewHelper(camera, renderer.domElement);
+
     const tileSize = 16;
-    const tileTextureWidth = 256;
+    const tileTextureWidth = 64;
     const tileTextureHeight = 64;
     const loader = new THREE.TextureLoader();
     const texture = loader.load("https://threejsfundamentals.org/threejs/resources/images/minecraft/flourish-cc-by-nc-sa.png");
     texture.magFilter = THREE.NearestFilter;
     texture.minFilter = THREE.NearestFilter;
 
-    const addPreview = (tex: THREE.Texture|HTMLImageElement) => {
+    const addPreview = (tex: THREE.Texture | HTMLImageElement) =>
+    {
         if (tex instanceof THREE.Texture) {
             tex.magFilter = THREE.NearestFilter;
             tex.minFilter = THREE.NearestFilter;
@@ -66,34 +69,37 @@ async function main() {
         }
     };
 
-    const sprites: any[] = [
+    const sprites: unknown[] = [
         // await resizeImage("https://static.wikia.nocookie.net/minecraftpocketedition/images/e/e1/Red_Mushroom.png", vec2(8, 8))
         await resizeImage(mushroomImage, vec2(16, 16))
-              .then((url) => {
-                  return new Promise((resolve, reject) => {
-                      const tex = loader.load(url as any, () => {
-                          console.log("Loaded texture");
-                          addPreview(tex);
-                          resolve(tex);
-                      });
-                  });
-              }),
+            .then((url) =>
+            {
+                return new Promise((resolve, reject) =>
+                {
+                    const tex = loader.load(url as string, () =>
+                    {
+                        console.log("Loaded texture");
+                        addPreview(tex);
+                        resolve(tex);
+                    });
+                });
+            }),
     ];
 
     {
-        let material = new THREE.MeshBasicMaterial({
-            map: sprites[0],
+        const material = new THREE.MeshBasicMaterial({
+            map: sprites[0] as THREE.Texture,
             side: THREE.DoubleSide,
             alphaTest: 0.1,
             transparent: false,
         });
-        let geometry = new THREE.PlaneGeometry(cellSize, cellSize);
-        let mesh = new THREE.Mesh(geometry, material);
-        mesh.position.set(cellSize/2, cellSize/2, 0);
+        const geometry = new THREE.PlaneGeometry(cellSize, cellSize);
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.position.set(cellSize / 2, cellSize / 2, 0);
 
-        let mesh2 = mesh.clone();
-        mesh2.rotateOnAxis(new THREE.Vector3(0, 1, 0), -Math.PI/2);
-        mesh2.position.set(0, cellSize/2, cellSize/2);
+        const mesh2 = mesh.clone();
+        mesh2.rotateOnAxis(new THREE.Vector3(0, 1, 0), -Math.PI / 2);
+        mesh2.position.set(0, cellSize / 2, cellSize / 2);
 
         scene.add(mesh);
         scene.add(mesh2);
@@ -104,15 +110,14 @@ async function main() {
     scene.add(axis);
 
 
-    function addLight(x: number, y: number, z: number) {
-        const color = 0xFFFFFF;
-        const intensity = 1;
-        const light = new THREE.DirectionalLight(color, intensity);
-        light.position.set(x, y, z);
-        scene.add(light);
-    }
-    addLight(-1,  2,  4);
-    addLight( 1, -1, -2);
+    addSun(scene, 4, 8, 4, deg2rad(0), 0, kelvinRGB(4200), 3.0);
+
+    addLight(scene, -1, 5, 4, kelvinRGB(2000), 100.0);
+    addLight(scene, cellSize/4, 1, -2, kelvinRGB(2200), 100.0);
+
+    const ambientLight = new THREE.AmbientLight(kelvinRGB(6000), 0.2);
+    scene.add(ambientLight);
+
 
     const world = new VoxelWorld({
         cellSize,
@@ -124,12 +129,42 @@ async function main() {
     const material = new THREE.MeshLambertMaterial({
         map: texture,
         side: THREE.DoubleSide,
-        alphaTest: 0.1,
-        transparent: true,
+        alphaTest: 0,
+        transparent: false,
     });
 
+    {
+        const sprite = sprites[0] as THREE.Texture;
+
+        const atlas = new BasicAtlas(32);
+        const pixels = new PixelData(sprite.image, sprite.image.width, sprite.image.height);
+        console.log(`atlas pixels: ${pixels.width}x${pixels.height}`);
+
+        for (let y = 0; y < sprite.image.height; ++y) {
+            for (let x = 0; x < sprite.image.width; ++x) {
+                const color = pixels.get(x, y);
+                if (color.a < 127) {
+                    continue;
+                }
+
+                const c = packColor24(color.r, color.g, color.b);
+
+                atlas.addColor(c);
+            }
+        }
+        const image = atlas.build();
+        addPreviewImage(image);
+
+        const tex = new THREE.Texture(image);
+        tex.magFilter = THREE.NearestFilter;
+        tex.minFilter = THREE.NearestFilter;
+        tex.needsUpdate = true;
+        material.map = tex;
+    }
+
     const cellIdToMesh = {};
-    function updateCellGeometry(x: number, y: number, z: number) {
+    function updateCellGeometry(x: number, y: number, z: number)
+    {
         const cellX = Math.floor(x / cellSize);
         const cellY = Math.floor(y / cellSize);
         const cellZ = Math.floor(z / cellSize);
@@ -158,7 +193,7 @@ async function main() {
             mesh.position.set(cellX * cellSize, cellY * cellSize, cellZ * cellSize);
         }
 
-        const {positions, normals, uvs, indices} = world.generateGeometryDataForCell(cellX, cellY, cellZ);
+        const { positions, normals, uvs, indices } = world.generateGeometryDataForCell(cellX, cellY, cellZ);
         const geometry = mesh.geometry;
 
         geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(positions), 3));
@@ -172,15 +207,16 @@ async function main() {
     }
 
     const neighborOffsets = [
-        [ 0,  0,  0], // self
-        [-1,  0,  0], // left
-        [ 1,  0,  0], // right
-        [ 0, -1,  0], // down
-        [ 0,  1,  0], // up
-        [ 0,  0, -1], // back
-        [ 0,  0,  1], // front
+        [0, 0, 0], // self
+        [-1, 0, 0], // left
+        [1, 0, 0], // right
+        [0, -1, 0], // down
+        [0, 1, 0], // up
+        [0, 0, -1], // back
+        [0, 0, 1], // front
     ];
-    function updateVoxelGeometry(x: number, y: number, z: number) {
+    function updateVoxelGeometry(x: number, y: number, z: number)
+    {
         const updatedCellIds = {};
         for (const offset of neighborOffsets) {
             const ox = x + offset[0];
@@ -194,183 +230,36 @@ async function main() {
         }
     }
 
-    const center = cellSize/2;
-    const centerSqr = center*center;
+    const center = cellSize / 2;
+    const centerSqr = center * center;
 
-    const _img = sprites[0].image;
-    console.log(`Loading pixels for '${_img}'`);
-
-    function palettize(img: HTMLImageElement, maxColors: number)
-    {
-        const colors = [
-            0xCCCCCC,
-            0xC41C24,
-            0x949494,
-            0x7C4444,
-            0xFC2C2C,
-            0xE41414,
-            0x542C2C,
-            0x9C141C,
-            0xC04088,
-            0xE8A0B4,
-            0xC01428,
-            0x941430
-        ];
-        const pixels = new PixelData(img, img.width, img.height);
-        const colorPalette = {}; // Convert each of the colors into an indexed color for reference later.
-        const paletteLookup = {};
-
-        let i = 0;
-        for (let x = 0; x < img.width; x++) {
-            for (let y = 0; y < img.height; y++) {
-                const color = pixels.get(x, y);
-                if (color.a < 127) {
-                    continue;
-                }
-
-                const hash = (color.r << 16) | (color.g << 8) | color.b;
-                if (colorPalette[hash] == undefined) {
-                    colorPalette[hash] = i++;
-                }
-            }
-        }
-
-        return colorPalette;
-    }
+    const _img = (sprites[0] as THREE.Texture).image;
 
     const pixels = new PixelData(_img, _img.width, _img.height);
     pixels.prepareImageData();
-    // const palette = pixels.getPalette(8);
-    const colorLookup = palettize(_img, 8);
 
-    // TODO: Implement some kind of "sided" sampler.
-
-    function sampleSide(pixelData: PixelData, side: Side, x: number, y: number, z: number) {
-        const w = pixelData.width;
-        const h = pixelData.height;
-
-        switch(side) {
-            case Side.NORTH: return pixelData.get(w-y, z);
-            case Side.SOUTH: return pixelData.get(w-y, h-z);
-            case Side.EAST: return pixelData.get(h-y, x);
-            case Side.WEST: return pixelData.get(h-y, w-x);
-            case Side.TOP: return pixelData.get(x, z);
-            case Side.BOTTOM: return pixelData.get(x, z);
-            default: return null;
+    for (const { x,y,z,data } of world.enumerateVoxels()) {
+        const color = sampleSide(pixels, Side.EAST, x, y + 1, z);
+        const color2 = sampleSide(pixels, Side.NORTH, x, y + 1, z);
+        if (color == null && color2 == null) {
+            continue;
         }
-    }
 
-    for (let y = 0; y < cellSize; ++y) {
-        for (let z = 0; z < cellSize; ++z) {
-            for (let x = 0; x < cellSize; ++x) {
+        const ex = (color?.a || 0) & (color2?.a || 0);
 
-                let px = center - x;
-                let color = sampleSide(pixels, Side.EAST, x, y+1, z);
-                let color2 = sampleSide(pixels, Side.NORTH, x, y+1, z);
-                if (color == null && color2 == null) {
-                    continue
-                }
-
-                let ex = (color?.a || 0) & (color2?.a || 0);
-
-                // let color = pixels.get(cellSize - y, z - cellSize);
-
-                // console.log(`x:${px}, y:${y} = ${JSON.stringify(color)}`);
-
-                if (ex > 127) {
-                    // const hash = (color.r << 16) | (color.g << 8) | color.b;
-                    // const c = colorLookup[hash]; // This should never be undefined since we just fetched all of these values.
-                    world.setVoxel(x, y, z, randInt(1, 17));
-                }
-
-
-                /*
-                const height = (Math.sin(x / cellSize * Math.PI * 2) + Math.sin(z / cellSize * Math.PI * 3)) * (cellSize / 6) + (cellSize / 2);
-                if (y < height) {
-                    world.setVoxel(x, y, z, randInt(1, 17));
-                }
-                */
-
-                /*
-                const radius = 24;
-                const dist = (
-                    Math.pow(center-x, 2)-1
-                  + Math.pow(center-y, 2)-1
-                  + Math.pow(center-z, 2)-1
-                );
-
-                if (dist <= radius)
-                    world.setVoxel(x, y, z, randInt(3, 6));
-                */
-            }
+        if (ex > 127) {
+            world.setVoxel(x, y, z, randInt(1, 17));
         }
-    }
-
-    function randInt(min: number, max: number) {
-        return Math.floor(Math.random() * (max - min) + min);
     }
 
     updateVoxelGeometry(1, 1, 1);  // 0,0,0 will generate
 
+    console.log(`Estimated memory size: ${world.estimateMemorySize()}`);
+
+
 
     ////////////////////////////////////////////////////////////////////////////////
 
-
-
-    function line(origin: THREE.Vector3, dest: THREE.Vector3, material: THREE.LineBasicMaterial) {
-        const points = [
-            origin,
-            dest
-        ];
-
-        const geometry = new THREE.BufferGeometry().setFromPoints(points);
-        const line = new THREE.Line(geometry, material);
-
-        return line;
-    }
-
-    function addCross(scene: THREE.Scene, origin: THREE.Vector3, size: number) {
-        let mat = getMaterialForSide(Side.TOP);
-        scene.add(
-            line(origin, toThreeVector3(DirectionColor.UP.vector).multiplyScalar(size).add(origin), mat)
-        );
-
-        mat = getMaterialForSide(Side.BOTTOM);
-        scene.add(
-            line(origin, toThreeVector3(DirectionColor.DOWN.vector).multiplyScalar(size).add(origin), mat)
-        );
-
-        mat = getMaterialForSide(Side.NORTH);
-        scene.add(
-            line(origin, toThreeVector3(DirectionColor.NORTH.vector).multiplyScalar(size).add(origin), mat)
-        );
-
-        mat = getMaterialForSide(Side.SOUTH);
-        scene.add(
-            line(origin, toThreeVector3(DirectionColor.SOUTH.vector).multiplyScalar(size).add(origin), mat)
-        );
-
-        mat = getMaterialForSide(Side.EAST);
-        scene.add(
-            line(origin, toThreeVector3(DirectionColor.EAST.vector).multiplyScalar(size).add(origin), mat)
-        );
-
-        mat = getMaterialForSide(Side.WEST);
-        scene.add(
-            line(origin, toThreeVector3(DirectionColor.WEST.vector).multiplyScalar(size).add(origin), mat)
-        );
-    }
-
-    function addCorner(scene: THREE.Scene, origin: THREE.Vector3, size: number, directions: Side[]) {
-        directions.forEach((side) => {
-            let mat = getMaterialForSide(side);
-            let dir = toThreeVector3(DirectionColor.of(side).vector);
-
-            scene.add(
-                line(origin, dir.clone().multiplyScalar(size).add(origin), mat)
-            );
-        });
-    }
 
     const ORIGIN = new THREE.Vector3(0, 0, 0);
     const CENTER = new THREE.Vector3(center, center, center);
@@ -390,20 +279,10 @@ async function main() {
     ////////////////////////////////////////////////////////////////////////////////
 
 
-    function resizeRendererToDisplaySize(renderer) {
-        const canvas = renderer.domElement;
-        const width = canvas.clientWidth;
-        const height = canvas.clientHeight;
-        const needResize = canvas.width !== width || canvas.height !== height;
-        if (needResize) {
-            renderer.setSize(width, height, false);
-        }
-        return needResize;
-    }
-
     let renderRequested = false;
 
-    function render() {
+    function render()
+    {
         renderRequested = false;
 
         const delta = clock.getDelta();
@@ -411,54 +290,40 @@ async function main() {
 
         if (resizeRendererToDisplaySize(renderer)) {
             const canvas = renderer.domElement;
-            camera.aspect = canvas.clientWidth / canvas.clientHeight;
+            const aspect = canvas.clientWidth / canvas.clientHeight;
+            camera.left = -1 * zoom * aspect;
+            camera.right = 1 * zoom * aspect;
+            camera.top = 1 * zoom;
+            camera.bottom = -1 * zoom;
+            // camera.aspect = canvas.clientWidth / canvas.clientHeight;
             camera.updateProjectionMatrix();
         }
 
         controls.update(delta);
+
+        renderer.clear();
         renderer.render(scene, camera);
+
+        viewHelper.render(renderer);
 
         requestAnimationFrame(render);
     }
     render();
 
-    function requestRenderIfNotRequested() {
+    function requestRenderIfNotRequested()
+    {
         if (!renderRequested) {
             renderRequested = true;
             requestAnimationFrame(render);
         }
     }
 
-    let currentVoxel = 0;
-    let currentId;
 
-    document.querySelectorAll("#ui .tiles input[type=radio][name=voxel]").forEach((elem) => {
-        elem.addEventListener("click", allowUncheck);
-    });
-
-    function allowUncheck() {
-        if (this.id === currentId) {
-            this.checked = false;
-            currentId = undefined;
-            currentVoxel = 0;
-        } else {
-            currentId = this.id;
-            currentVoxel = parseInt(this.value);
-        }
-    }
-
-    function getCanvasRelativePosition(event) {
-        const rect = canvas!!.getBoundingClientRect();
-        return {
-            x: event.clientX - rect.left,
-            y: event.clientY - rect.top,
-        };
-    }
-
-    function placeVoxel(event) {
-        const pos = getCanvasRelativePosition(event);
-        const x = (pos.x / canvas!!.clientWidth ) *  2 - 1;
-        const y = (pos.y / canvas!!.clientHeight) * -2 + 1;  // note we flip Y
+    function placeVoxel(event)
+    {
+        const pos = getMousePositionRelative(canvas, event);
+        const x = (pos.x / canvas!.clientWidth) * 2 - 1;
+        const y = (pos.y / canvas!.clientHeight) * -2 + 1;  // note we flip Y
 
         const start = new THREE.Vector3();
         const end = new THREE.Vector3();
@@ -467,18 +332,17 @@ async function main() {
 
         const intersection = world.intersectRay(start, end);
         if (intersection) {
-            const voxelId = event.shiftKey ? 0 : currentVoxel;
+            const voxelId = event.shiftKey ? 0 : 0;
             // the intersection point is on the face. That means
             // the math imprecision could put us on either side of the face.
             // so go half a normal into the voxel if removing (currentVoxel = 0)
             // our out of the voxel if adding (currentVoxel  > 0)
-            const pos = intersection.position.map((v, ndx) => {
+            const pos = intersection.position.map((v, ndx) =>
+            {
                 return v + intersection.normal[ndx] * (voxelId > 0 ? 0.5 : -0.5);
             });
-            // @ts-ignore
-            world.setVoxel(...pos, voxelId);
-            // @ts-ignore
-            updateVoxelGeometry(...pos);
+            world.setVoxel(pos[0], pos[1], pos[2], voxelId);
+            updateVoxelGeometry(pos[0], pos[1], pos[2]);
             requestRenderIfNotRequested();
         }
     }
@@ -490,38 +354,45 @@ async function main() {
         moveY: 0,
     };
 
-    function recordStartPosition(event) {
+    function recordStartPosition(event: MouseEvent | Touch)
+    {
         mouse.x = event.clientX;
         mouse.y = event.clientY;
         mouse.moveX = 0;
         mouse.moveY = 0;
     }
-    function recordMovement(event) {
+    function recordMovement(event)
+    {
         mouse.moveX += Math.abs(mouse.x - event.clientX);
         mouse.moveY += Math.abs(mouse.y - event.clientY);
     }
-    function placeVoxelIfNoMovement(event) {
+    function placeVoxelIfNoMovement(event)
+    {
         if (mouse.moveX < 5 && mouse.moveY < 5) {
             placeVoxel(event);
         }
         window.removeEventListener("mousemove", recordMovement);
         window.removeEventListener("mouseup", placeVoxelIfNoMovement);
     }
-    canvas.addEventListener('mousedown', (event: any) => {
+    canvas.addEventListener("mousedown", (event: MouseEvent) =>
+    {
         event.preventDefault();
         recordStartPosition(event);
         window.addEventListener("mousemove", recordMovement);
         window.addEventListener("mouseup", placeVoxelIfNoMovement);
-    }, {passive: false});
-    canvas.addEventListener("touchstart", (event: any) => {
+    }, { passive: false });
+    canvas.addEventListener("touchstart", (event: TouchEvent) =>
+    {
         event.preventDefault();
         recordStartPosition(event.touches[0]);
-    }, {passive: false});
-    canvas.addEventListener("touchmove", (event: any) => {
+    }, { passive: false });
+    canvas.addEventListener("touchmove", (event: TouchEvent) =>
+    {
         event.preventDefault();
         recordMovement(event.touches[0]);
-    }, {passive: false});
-    canvas.addEventListener("touchend", () => {
+    }, { passive: false });
+    canvas.addEventListener("touchend", () =>
+    {
         placeVoxelIfNoMovement({
             clientX: mouse.x,
             clientY: mouse.y,
