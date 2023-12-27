@@ -1,14 +1,18 @@
 {
   "scripts": {
-    "start": "parcel index.html --open",
-    "build": "parcel build --public-url /np index.html",
+    "clean": "rimraf dist",
+    "start": "npm run clean && parcel index.html --open",
+    "build": "npm run clean && parcel build --public-url /np index.html",
     "lint": "eslint . --ext .ts"
   },
   "devDependencies": {
     "@types/three": "^0.160.0",
-    "@typescript-eslint/eslint-plugin": "^4.14.2",
+    "@typescript-eslint/eslint-plugin": "^6.x",
+    "@typescript-eslint/parser": "^6.x",
     "eslint": "^7.19.0",
+    "madge": "^6.1.0",
     "parcel-bundler": "^1.12.4",
+    "rimraf": "^5.0.5",
     "sass": "^1.69.5"
   },
   "dependencies": {
