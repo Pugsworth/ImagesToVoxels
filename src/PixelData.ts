@@ -22,7 +22,7 @@ export class PixelData
             this.prepareImageData();
         }
 
-        return this._data!!;
+        return this._data!;
     }
 
 
@@ -54,8 +54,8 @@ export class PixelData
                 throw new Error("Invalid input!");
             }
 
-            this._canvas!!.width = width;
-            this._canvas!!.height = height;
+            this._canvas!.width = width;
+            this._canvas!.height = height;
             this._width = width;
             this._height = height;
         }
@@ -74,6 +74,7 @@ export class PixelData
 
         const instance = new PixelData(null, width, height);
         instance.drawImage(img, 0, 0, instance.width, instance.height);
+        instance.prepareImageData();
         return instance;
     }
 
@@ -104,9 +105,9 @@ export class PixelData
         this.assertCanvas();
         this.ensureContext();
 
-        const width = this._canvas!!.width;
-        const height = this._canvas!!.height;
-        const data = this._context!!.getImageData(0, 0, width, height);
+        const width = this._canvas!.width;
+        const height = this._canvas!.height;
+        const data = this._context!.getImageData(0, 0, width, height);
         this._data = data;
     }
 
@@ -115,7 +116,7 @@ export class PixelData
         this.assertCanvas();
 
         if (this._context == null) {
-            this._context = this._canvas!!.getContext("2d");
+            this._context = this._canvas!.getContext("2d");
         }
 
         this.ready = true;
@@ -133,15 +134,15 @@ export class PixelData
         this.assertCanvas();
         this.ensureContext();
 
-        if (width > this._canvas!!.width) {
-            this._canvas!!.width = width;
+        if (width > this._canvas!.width) {
+            this._canvas!.width = width;
         }
 
-        if (height > this._canvas!!.height) {
-            this._canvas!!.height = height;
+        if (height > this._canvas!.height) {
+            this._canvas!.height = height;
         }
 
-        this._context!!.drawImage(img, x, y, width, height);
+        this._context!.drawImage(img, x, y, width, height);
     }
 
     get(x: number, y: number)
@@ -152,7 +153,7 @@ export class PixelData
 
         this.assertCanvas();
 
-        const columns = this._canvas!!.width;
+        const columns = this._canvas!.width;
         const p = (columns * x + y) * 4;
         return {
             r: this.data.data[p],
